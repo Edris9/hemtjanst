@@ -30,12 +30,12 @@ async function laddaDagensLista() {
     .order("tid", { ascending: true });
 
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="3" class="muted">Kunde inte hämta listan.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="muted">Kunde inte hämta listan.</td></tr>`;
     return;
   }
 
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="3" class="muted">Inga bilar registrerade idag.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="muted">Inga bilar registrerade idag.</td></tr>`;
     return;
   }
 
@@ -46,6 +46,7 @@ async function laddaDagensLista() {
       <td>${r.regnr}</td>
       <td>${r.forare}</td>
       <td>${formatKlockslag(r.tid)}</td>
+      <td>${skift(r.tid)}</td>
     </tr>`
     )
     .join("");

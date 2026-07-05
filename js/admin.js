@@ -181,11 +181,11 @@ async function laddaSessioner() {
 
   const { data, error } = await query;
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muted">Kunde inte hämta sessioner.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="muted">Kunde inte hämta sessioner.</td></tr>`;
     return;
   }
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muted">Inga sessioner i vald period.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="muted">Inga sessioner i vald period.</td></tr>`;
     return;
   }
 
@@ -197,6 +197,7 @@ async function laddaSessioner() {
       <td>${s.regnr}</td>
       <td>${s.forare}</td>
       <td>${formatKlockslag(s.tid)}</td>
+      <td>${skift(s.tid)}</td>
       <td>
         <div class="btn-row" style="width:auto;">
           <button class="btn-secondary btn-small" data-action="redigera">Redigera</button>

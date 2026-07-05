@@ -5,11 +5,12 @@ function exportSessionerTillExcel(rows, filnamn) {
     Datum: r.datum,
     Regnr: r.regnr,
     Förare: r.forare,
-    Tid: formatKlockslag(r.tid)
+    Tid: formatKlockslag(r.tid),
+    Skift: skift(r.tid)
   }));
 
   const ws = XLSX.utils.json_to_sheet(data);
-  ws["!cols"] = [{ wch: 11 }, { wch: 10 }, { wch: 20 }, { wch: 14 }];
+  ws["!cols"] = [{ wch: 11 }, { wch: 10 }, { wch: 20 }, { wch: 14 }, { wch: 12 }];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Sessioner");

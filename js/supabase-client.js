@@ -18,6 +18,10 @@ function inomArbetstid(datum = new Date()) {
   return minuter >= 7 * 60 && minuter < 22 * 60;
 }
 
+function skift(iso) {
+  return new Date(iso).getHours() < 12 ? "Dagtid" : "Kvällstid";
+}
+
 function formatKlockslag(iso) {
   if (!iso) return "";
   const d = new Date(iso);
