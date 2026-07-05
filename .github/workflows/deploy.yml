@@ -1,0 +1,54 @@
+name: Deploy till GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checka ut repo
+        uses: actions/checkout@v4
+
+      - name: Förbered publiceringsmapp
+        run: |
+          mkdir -p _site
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='sql' \
+            --exclude='_site' \
+            --exclude='config.example.js' \
+            . _site/
+
+      - name: Generera config.js från secrets
+        run: |
+          cat <<EOF > _site/config.js
+          window.SUPABASE_CONFIG = {
+            url: "${{ secrets.SUPABASE_URL }}",
+            anonKey: "${{ secrets.SUPABASE_ANON_KEY }}"
+          };
+          EOF
+
+      - name: Ladda upp artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Publicera till GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

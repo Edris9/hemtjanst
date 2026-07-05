@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Admin – Billista</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+  <h1>Admin – Billista</h1>
+  <p class="subtitle">Den här sidans URL är hemlig. Dela den inte.</p>
+
+  <h2>Bilar</h2>
+  <div class="card">
+    <label for="ny-regnr">Lägg till bil</label>
+    <div class="btn-row">
+      <input type="text" id="ny-regnr" placeholder="Regnr, t.ex. ABC123">
+      <button id="btn-lagg-till-bil" class="btn-primary">Lägg till</button>
+    </div>
+  </div>
+  <div id="bilar-lista" class="card"></div>
+
+  <h2>Sessioner</h2>
+  <div class="chip-row" id="sessioner-filter">
+    <div class="chip active" data-filter="dag">Dag</div>
+    <div class="chip" data-filter="vecka">Vecka</div>
+    <div class="chip" data-filter="manad">Månad</div>
+    <div class="chip" data-filter="alla">Alla</div>
+  </div>
+  <div class="btn-row" style="margin-bottom:16px;">
+    <button id="btn-ny-session" class="btn-secondary">Lägg till session manuellt</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Datum</th><th>Regnr</th><th>Dag</th><th>Kväll</th>
+          <th>Uttag</th><th>Inlämning</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="sessioner-body">
+        <tr><td colspan="8" class="muted">Laddar...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Export &amp; rensning</h2>
+  <div class="card">
+    <label>Snabbexport</label>
+    <div class="btn-row">
+      <button id="export-dag" class="btn-secondary">Dag</button>
+      <button id="export-vecka" class="btn-secondary">Vecka</button>
+      <button id="export-manad" class="btn-secondary">Månad</button>
+    </div>
+
+    <label style="margin-top:18px;">Valfri period</label>
+    <div class="btn-row">
+      <input type="date" id="export-fran">
+      <input type="date" id="export-till">
+    </div>
+    <button id="export-period" class="btn-secondary">Exportera period</button>
+  </div>
+
+  <div class="card">
+    <label>Farlig zon</label>
+    <button id="btn-rensa" class="btn-danger">Rensa alla sessioner</button>
+    <p class="muted" style="margin-top:8px;">Tar bort all körhistorik. Bilarna behålls.</p>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+<div id="print-area" class="hidden"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/export.js"></script>
+<script src="js/qr.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
