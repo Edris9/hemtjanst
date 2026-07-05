@@ -251,5 +251,9 @@ th {
 }
 
 @media (min-width: 700px) {
-  .container { padding: 32px; }
+  .container { max-width: 900px; padding: 32px; }
+}
+
+@media (min-width: 1100px) {
+  .container { max-width: 1120px; }
 }
