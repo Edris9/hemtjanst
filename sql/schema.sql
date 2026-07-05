@@ -11,26 +11,23 @@ create table if not exists bilar (
 
 -- =========================================================
 -- Tabell: sessioner
+-- Enkel logg: varje skanning skapar en ny rad (förare + tid).
+-- Ingen separat "lämna in"-åtgärd — nästa skanning av samma bil
+-- innebär automatiskt att föregående förares körning är slut.
 -- regnr har ingen ON DELETE/UPDATE CASCADE med flit: om en bil
 -- har sessioner ska man inte kunna ta bort eller byta regnr på
 -- bilen förrän sessionerna är borttagna/omflyttade (se admin-vy).
 -- =========================================================
 create table if not exists sessioner (
-  id             uuid primary key default gen_random_uuid(),
-  regnr          text not null references bilar (regnr),
-  datum          date not null default current_date,
-  forare_dag     text,
-  forare_kvall   text,
-  uttag_tid      timestamptz not null default now(),
-  inlamning_tid  timestamptz,
-  anvand_timmar  numeric,
-  status         text not null default 'i_korning'
-                 check (status in ('i_korning', 'inlamnad'))
+  id     uuid primary key default gen_random_uuid(),
+  regnr  text not null references bilar (regnr),
+  datum  date not null default current_date,
+  forare text not null,
+  tid    timestamptz not null default now()
 );
 
 create index if not exists idx_sessioner_regnr_datum on sessioner (regnr, datum);
 create index if not exists idx_sessioner_datum        on sessioner (datum);
-create index if not exists idx_sessioner_status       on sessioner (status);
 
 -- =========================================================
 -- RLS — appen är intern och autentiserar inte användare,

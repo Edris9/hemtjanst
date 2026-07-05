@@ -187,16 +187,6 @@ th {
   border-radius: var(--radius);
 }
 
-.badge {
-  display: inline-block;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-.badge.i_korning { background: var(--warn-bg); color: #7a5b00; }
-.badge.inlamnad  { background: var(--ok-bg); color: var(--primary-dark); }
-
 /* --- Filter chips --- */
 .chip-row {
   display: flex;

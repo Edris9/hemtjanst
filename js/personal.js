@@ -1,4 +1,7 @@
-// Personal-vy: skanna QR, registrera förare, lämna in bil, dagens lista, export.
+// Personal-vy: skanna QR, registrera förare, dagens lista, export.
+// Ny modell: varje skanning loggar bara förare + tid. Skannar
+// någon en bil som redan används idag innebär det automatiskt
+// att den nya föraren tar över (ingen separat "lämna in").
 
 const modalRoot = document.getElementById("modal-root");
 
@@ -24,15 +27,15 @@ async function laddaDagensLista() {
     .from("sessioner")
     .select("*")
     .eq("datum", idagISO())
-    .order("uttag_tid", { ascending: true });
+    .order("tid", { ascending: true });
 
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">Kunde inte hämta listan.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="muted">Kunde inte hämta listan.</td></tr>`;
     return;
   }
 
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">Inga bilar registrerade idag.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="muted">Inga bilar registrerade idag.</td></tr>`;
     return;
   }
 
@@ -41,11 +44,8 @@ async function laddaDagensLista() {
       (r) => `
     <tr>
       <td>${r.regnr}</td>
-      <td>${r.forare_dag || "–"}</td>
-      <td>${r.forare_kvall || "–"}</td>
-      <td>${formatKlockslag(r.uttag_tid)}</td>
-      <td>${formatKlockslag(r.inlamning_tid)}</td>
-      <td><span class="badge ${r.status}">${r.status === "i_korning" ? "I körning" : "Inlämnad"}</span></td>
+      <td>${r.forare}</td>
+      <td>${formatKlockslag(r.tid)}</td>
     </tr>`
     )
     .join("");
@@ -61,22 +61,22 @@ async function hanteraBilParam(regnr) {
     return;
   }
 
-  const { data: session } = await sb
+  if (!inomArbetstid()) {
+    visaModalUtanforArbetstid();
+    return;
+  }
+
+  const { data: senaste } = await sb
     .from("sessioner")
     .select("*")
     .eq("regnr", regnr)
     .eq("datum", idagISO())
-    .eq("status", "i_korning")
+    .order("tid", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (session) {
-    if (!ärKvall()) {
-      visaModalUpptagen(session.forare_dag);
-    } else if (!session.forare_kvall) {
-      visaModalTaOver(regnr, session);
-    } else {
-      visaModalUpptagen(session.forare_kvall);
-    }
+  if (senaste) {
+    visaModalTaOver(regnr, senaste);
   } else {
     visaFormularRegistrera(regnr);
   }
@@ -96,11 +96,11 @@ function visaModalBilFinnsInte() {
   };
 }
 
-function visaModalUpptagen(namn) {
+function visaModalUtanforArbetstid() {
   visaModal(`
     <div class="modal warn">
-      <h3>Bilen används redan</h3>
-      <p>Bilen används just nu av <strong>${namn}</strong>.</p>
+      <h3>Utanför arbetstid</h3>
+      <p>Registrering går bara mellan <strong>07:00</strong> och <strong>22:00</strong>.</p>
       <button class="btn-secondary" id="modal-stang">Stäng</button>
     </div>
   `);
@@ -110,14 +110,15 @@ function visaModalUpptagen(namn) {
   };
 }
 
-function visaModalTaOver(regnr, session) {
+function visaModalTaOver(regnr, senaste) {
   visaModal(`
     <div class="modal">
-      <h3>Ta över som kvällsförare?</h3>
-      <p>Bilen kördes idag av <strong>${session.forare_dag || "okänd"}</strong> och har inte lämnats in.</p>
+      <h3>Bilen används just nu</h3>
+      <p>Bilen körs av <strong>${senaste.forare}</strong> sedan ${formatKlockslag(senaste.tid)}.</p>
+      <p>Vill du ta över bilen?</p>
       <div class="btn-row">
         <button class="btn-secondary" id="modal-nej">Nej</button>
-        <button class="btn-primary" id="modal-ja">Ja</button>
+        <button class="btn-primary" id="modal-ja">Ja, ta över</button>
       </div>
     </div>
   `);
@@ -126,15 +127,14 @@ function visaModalTaOver(regnr, session) {
     stangModal();
   };
   document.getElementById("modal-ja").onclick = () => {
-    visaFormularRegistrera(regnr, { taOverSessionId: session.id });
+    visaFormularRegistrera(regnr);
   };
 }
 
-function visaFormularRegistrera(regnr, { taOverSessionId = null } = {}) {
-  const titel = taOverSessionId ? "Vem tar över som kvällsförare?" : "Vad heter du?";
+function visaFormularRegistrera(regnr) {
   visaModal(`
     <div class="modal">
-      <h3>${titel}</h3>
+      <h3>Vad heter du?</h3>
       <p class="muted">Bil: <strong>${regnr}</strong></p>
       <label for="namn-input">Namn</label>
       <input type="text" id="namn-input" autocomplete="name" placeholder="För- och efternamn">
@@ -160,27 +160,12 @@ function visaFormularRegistrera(regnr, { taOverSessionId = null } = {}) {
       return;
     }
 
-    const nu = new Date();
-
-    if (taOverSessionId) {
-      await sb.from("sessioner").update({ forare_kvall: namn }).eq("id", taOverSessionId);
-    } else if (!ärKvall(nu)) {
-      await sb.from("sessioner").insert({
-        regnr,
-        datum: idagISO(),
-        forare_dag: namn,
-        uttag_tid: nu.toISOString(),
-        status: "i_korning"
-      });
-    } else {
-      await sb.from("sessioner").insert({
-        regnr,
-        datum: idagISO(),
-        forare_kvall: namn,
-        uttag_tid: nu.toISOString(),
-        status: "i_korning"
-      });
-    }
+    await sb.from("sessioner").insert({
+      regnr,
+      datum: idagISO(),
+      forare: namn,
+      tid: new Date().toISOString()
+    });
 
     visaModalKorForsiktigt();
   };
@@ -200,88 +185,6 @@ function visaModalKorForsiktigt() {
   };
 }
 
-// --- Lämna in bil ---
-
-async function visaLamnaInLista() {
-  const { data, error } = await sb
-    .from("sessioner")
-    .select("*")
-    .eq("status", "i_korning")
-    .order("uttag_tid", { ascending: true });
-
-  if (error || !data.length) {
-    visaModal(`
-      <div class="modal">
-        <h3>Lämna in bil</h3>
-        <p class="muted">Inga bilar är just nu utlämnade.</p>
-        <button class="btn-secondary" id="modal-stang">Stäng</button>
-      </div>
-    `);
-    document.getElementById("modal-stang").onclick = stangModal;
-    return;
-  }
-
-  const rader = data
-    .map(
-      (s) => `
-      <div class="list-item">
-        <div>
-          <strong>${s.regnr}</strong><br>
-          <span class="meta">Dag: ${s.forare_dag || "–"} · Kväll: ${s.forare_kvall || "–"}</span>
-        </div>
-        <button class="btn-primary btn-small" data-id="${s.id}">Lämna in</button>
-      </div>`
-    )
-    .join("");
-
-  visaModal(`
-    <div class="modal">
-      <h3>Lämna in bil</h3>
-      <div>${rader}</div>
-      <button class="btn-secondary" id="modal-stang" style="margin-top:14px;">Avbryt</button>
-    </div>
-  `);
-
-  document.getElementById("modal-stang").onclick = stangModal;
-
-  modalRoot.querySelectorAll("button[data-id]").forEach((btn) => {
-    btn.onclick = () => {
-      const session = data.find((s) => s.id === btn.dataset.id);
-      visaBekraftaInlamning(session);
-    };
-  });
-}
-
-function visaBekraftaInlamning(session) {
-  visaModal(`
-    <div class="modal">
-      <h3>Lämna in ${session.regnr}?</h3>
-      <p class="muted">Dag: ${session.forare_dag || "–"} · Kväll: ${session.forare_kvall || "–"}</p>
-      <div class="btn-row">
-        <button class="btn-secondary" id="modal-avbryt">Avbryt</button>
-        <button class="btn-primary" id="modal-bekrafta">Bekräfta</button>
-      </div>
-    </div>
-  `);
-
-  document.getElementById("modal-avbryt").onclick = () => visaLamnaInLista();
-
-  document.getElementById("modal-bekrafta").onclick = async () => {
-    const nu = new Date();
-    await sb
-      .from("sessioner")
-      .update({
-        inlamning_tid: nu.toISOString(),
-        anvand_timmar: beraknaTimmar(session.uttag_tid, nu.toISOString()),
-        status: "inlamnad"
-      })
-      .eq("id", session.id);
-
-    stangModal();
-    laddaDagensLista();
-  };
-}
-
 // --- Export ---
 
 async function exporteraPeriod(startDatum, filnamn) {
@@ -290,7 +193,8 @@ async function exporteraPeriod(startDatum, filnamn) {
     .select("*")
     .gte("datum", startDatum)
     .lte("datum", idagISO())
-    .order("datum", { ascending: true });
+    .order("datum", { ascending: true })
+    .order("tid", { ascending: true });
 
   if (error || !data.length) {
     alert("Ingen data att exportera för vald period.");
@@ -311,8 +215,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   laddaDagensLista();
-
-  document.getElementById("btn-lamna-in").onclick = visaLamnaInLista;
 
   document.getElementById("export-dag").onclick = () =>
     exporteraPeriod(idagISO(), `billista-dag-${idagISO()}.xlsx`);

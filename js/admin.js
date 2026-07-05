@@ -176,16 +176,16 @@ function periodFilter(query, filter) {
 
 async function laddaSessioner() {
   const tbody = document.getElementById("sessioner-body");
-  let query = sb.from("sessioner").select("*").order("datum", { ascending: false }).order("uttag_tid", { ascending: false });
+  let query = sb.from("sessioner").select("*").order("datum", { ascending: false }).order("tid", { ascending: false });
   query = periodFilter(query, sessionerFilter);
 
   const { data, error } = await query;
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="8" class="muted">Kunde inte hämta sessioner.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">Kunde inte hämta sessioner.</td></tr>`;
     return;
   }
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="muted">Inga sessioner i vald period.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">Inga sessioner i vald period.</td></tr>`;
     return;
   }
 
@@ -195,11 +195,8 @@ async function laddaSessioner() {
     <tr data-id="${s.id}">
       <td>${s.datum}</td>
       <td>${s.regnr}</td>
-      <td>${s.forare_dag || "–"}</td>
-      <td>${s.forare_kvall || "–"}</td>
-      <td>${formatKlockslag(s.uttag_tid)}</td>
-      <td>${formatKlockslag(s.inlamning_tid)}</td>
-      <td><span class="badge ${s.status}">${s.status === "i_korning" ? "I körning" : "Inlämnad"}</span></td>
+      <td>${s.forare}</td>
+      <td>${formatKlockslag(s.tid)}</td>
       <td>
         <div class="btn-row" style="width:auto;">
           <button class="btn-secondary btn-small" data-action="redigera">Redigera</button>
@@ -240,23 +237,11 @@ async function visaSessionModal(session) {
       <label for="s-datum">Datum</label>
       <input type="date" id="s-datum" value="${session ? session.datum : idagISO()}">
 
-      <label for="s-dag">Förare dag</label>
-      <input type="text" id="s-dag" value="${session && session.forare_dag ? session.forare_dag : ""}">
+      <label for="s-forare">Förare</label>
+      <input type="text" id="s-forare" value="${session ? session.forare : ""}">
 
-      <label for="s-kvall">Förare kväll</label>
-      <input type="text" id="s-kvall" value="${session && session.forare_kvall ? session.forare_kvall : ""}">
-
-      <label for="s-uttag">Uttag</label>
-      <input type="datetime-local" id="s-uttag" value="${session ? toDatetimeLocal(session.uttag_tid) : toDatetimeLocal(new Date().toISOString())}">
-
-      <label for="s-inlamning">Inlämning</label>
-      <input type="datetime-local" id="s-inlamning" value="${session ? toDatetimeLocal(session.inlamning_tid) : ""}">
-
-      <label for="s-status">Status</label>
-      <select id="s-status">
-        <option value="i_korning" ${session && session.status === "i_korning" ? "selected" : ""}>I körning</option>
-        <option value="inlamnad" ${session && session.status === "inlamnad" ? "selected" : ""}>Inlämnad</option>
-      </select>
+      <label for="s-tid">Tid</label>
+      <input type="datetime-local" id="s-tid" value="${session ? toDatetimeLocal(session.tid) : toDatetimeLocal(new Date().toISOString())}">
 
       <div class="btn-row">
         <button class="btn-secondary" id="modal-avbryt">Avbryt</button>
@@ -267,18 +252,11 @@ async function visaSessionModal(session) {
 
   document.getElementById("modal-avbryt").onclick = stangModal;
   document.getElementById("modal-spara").onclick = async () => {
-    const uttagIso = fraDatetimeLocal(document.getElementById("s-uttag").value);
-    const inlamningIso = fraDatetimeLocal(document.getElementById("s-inlamning").value);
-
     const rad = {
       regnr: document.getElementById("s-regnr").value,
       datum: document.getElementById("s-datum").value,
-      forare_dag: document.getElementById("s-dag").value.trim() || null,
-      forare_kvall: document.getElementById("s-kvall").value.trim() || null,
-      uttag_tid: uttagIso,
-      inlamning_tid: inlamningIso,
-      anvand_timmar: uttagIso && inlamningIso ? beraknaTimmar(uttagIso, inlamningIso) : null,
-      status: document.getElementById("s-status").value
+      forare: document.getElementById("s-forare").value.trim(),
+      tid: fraDatetimeLocal(document.getElementById("s-tid").value)
     };
 
     if (ar) {

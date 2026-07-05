@@ -13,8 +13,9 @@ function idagISO() {
   return new Date(d - tz).toISOString().slice(0, 10);
 }
 
-function ärKvall(datum = new Date()) {
-  return datum.getHours() >= 12;
+function inomArbetstid(datum = new Date()) {
+  const minuter = datum.getHours() * 60 + datum.getMinutes();
+  return minuter >= 7 * 60 && minuter < 22 * 60;
 }
 
 function formatKlockslag(iso) {
@@ -26,11 +27,6 @@ function formatKlockslag(iso) {
     hour: "2-digit",
     minute: "2-digit"
   });
-}
-
-function beraknaTimmar(uttagIso, inlamningIso) {
-  const ms = new Date(inlamningIso) - new Date(uttagIso);
-  return Math.round((ms / 3_600_000) * 100) / 100;
 }
 
 function veckoStart(datum = new Date()) {
