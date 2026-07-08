@@ -3,16 +3,6 @@
 // någon en bil som redan används idag innebär det automatiskt
 // att den nya föraren tar över (ingen separat "lämna in").
 
-const modalRoot = document.getElementById("modal-root");
-
-function stangModal() {
-  modalRoot.innerHTML = "";
-}
-
-function visaModal(html) {
-  modalRoot.innerHTML = `<div class="overlay">${html}</div>`;
-}
-
 function rensaBilParam() {
   const url = new URL(window.location.href);
   url.searchParams.delete("bil");
@@ -216,6 +206,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   laddaDagensLista();
+
+  document.getElementById("btn-rapportera").onclick = () => visaRapporteraModal();
 
   document.getElementById("export-dag").onclick = () =>
     exporteraPeriod(idagISO(), `billista-dag-${idagISO()}.xlsx`);

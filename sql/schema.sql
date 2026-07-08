@@ -30,11 +30,27 @@ create index if not exists idx_sessioner_regnr_datum on sessioner (regnr, datum)
 create index if not exists idx_sessioner_datum        on sessioner (datum);
 
 -- =========================================================
--- RLS — appen är intern och autentiserar inte användare,
--- så anon-nyckeln ges full åtkomst till båda tabellerna.
+-- Tabell: meddelanden
+-- Personalen kan rapportera problem/skriva meddelanden.
+-- Visas för dev-teamet på /ticket.
 -- =========================================================
-alter table bilar     enable row level security;
-alter table sessioner enable row level security;
+create table if not exists meddelanden (
+  id         uuid primary key default gen_random_uuid(),
+  regnr      text references bilar (regnr),
+  forare     text not null,
+  meddelande text not null,
+  skapad     timestamptz not null default now()
+);
+
+create index if not exists idx_meddelanden_skapad on meddelanden (skapad desc);
+
+-- =========================================================
+-- RLS — appen är intern och autentiserar inte användare,
+-- så anon-nyckeln ges full åtkomst till alla tabeller.
+-- =========================================================
+alter table bilar       enable row level security;
+alter table sessioner   enable row level security;
+alter table meddelanden enable row level security;
 
 drop policy if exists "bilar_anon_all" on bilar;
 create policy "bilar_anon_all"
@@ -52,6 +68,15 @@ create policy "sessioner_anon_all"
   using (true)
   with check (true);
 
+drop policy if exists "meddelanden_anon_all" on meddelanden;
+create policy "meddelanden_anon_all"
+  on meddelanden
+  for all
+  to anon
+  using (true)
+  with check (true);
+
 grant usage on schema public to anon;
-grant select, insert, update, delete on bilar     to anon;
-grant select, insert, update, delete on sessioner to anon;
+grant select, insert, update, delete on bilar       to anon;
+grant select, insert, update, delete on sessioner   to anon;
+grant select, insert, update, delete on meddelanden to anon;

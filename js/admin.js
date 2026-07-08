@@ -1,15 +1,5 @@
 // Admin-vy: bilar (CRUD), sessioner (CRUD), export, rensning.
 
-const modalRoot = document.getElementById("modal-root");
-
-function stangModal() {
-  modalRoot.innerHTML = "";
-}
-
-function visaModal(html) {
-  modalRoot.innerHTML = `<div class="overlay">${html}</div>`;
-}
-
 function visaBekraftaModal(text, knappText, onOk) {
   visaModal(`
     <div class="modal warn">
@@ -329,6 +319,8 @@ document.getElementById("btn-rensa").addEventListener("click", () => {
     }
   );
 });
+
+document.getElementById("btn-rapportera").addEventListener("click", () => visaRapporteraModal());
 
 // =====================================================
 // Init
