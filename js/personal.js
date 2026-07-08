@@ -14,18 +14,18 @@ function rensaBilParam() {
 async function laddaDagensLista() {
   const tbody = document.getElementById("dagens-lista-body");
   const { data, error } = await sb
-    .from("sessioner")
+    .from("sessioner_med_sluttid")
     .select("*")
     .eq("datum", idagISO())
     .order("tid", { ascending: true });
 
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="4" class="muted">Kunde inte hämta listan.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">Kunde inte hämta listan.</td></tr>`;
     return;
   }
 
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="4" class="muted">Inga bilar registrerade idag.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">Inga bilar registrerade idag.</td></tr>`;
     return;
   }
 
@@ -33,9 +33,10 @@ async function laddaDagensLista() {
     .map(
       (r) => `
     <tr>
-      <td>${r.regnr}</td>
-      <td>${r.forare}</td>
+      <td>${escapeHtml(r.regnr)}</td>
+      <td>${escapeHtml(r.forare)}</td>
       <td>${formatKlockslag(r.tid)}</td>
+      <td>${formatKlockslag(r.slut)}</td>
       <td>${skift(r.tid)}</td>
     </tr>`
     )
@@ -180,7 +181,7 @@ function visaModalKorForsiktigt() {
 
 async function exporteraPeriod(startDatum, filnamn) {
   const { data, error } = await sb
-    .from("sessioner")
+    .from("sessioner_med_sluttid")
     .select("*")
     .gte("datum", startDatum)
     .lte("datum", idagISO())

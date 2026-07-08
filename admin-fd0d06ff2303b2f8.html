@@ -20,6 +20,7 @@
     <label for="ny-regnr">Lägg till bil</label>
     <div class="btn-row">
       <input type="text" id="ny-regnr" placeholder="Regnr, t.ex. ABC123">
+      <input type="text" id="ny-ansvarig" placeholder="Ansvarig personal">
       <button id="btn-lagg-till-bil" class="btn-primary">Lägg till</button>
     </div>
   </div>
@@ -39,11 +40,11 @@
     <table>
       <thead>
         <tr>
-          <th>Datum</th><th>Regnr</th><th>Förare</th><th>Tid</th><th>Skift</th><th></th>
+          <th>Datum</th><th>Regnr</th><th>Förare</th><th>Start</th><th>Slut</th><th>Skift</th><th></th>
         </tr>
       </thead>
       <tbody id="sessioner-body">
-        <tr><td colspan="6" class="muted">Laddar...</td></tr>
+        <tr><td colspan="7" class="muted">Laddar...</td></tr>
       </tbody>
     </table>
   </div>
@@ -71,6 +72,8 @@
     <p class="muted" style="margin-top:8px;">Tar bort all körhistorik. Bilarna behålls.</p>
   </div>
 </div>
+
+<footer class="site-footer">Systemet hanteras av behörighets personal på verksamheten 2026, bergum gunnilse hemtjänst</footer>
 
 <div id="modal-root"></div>
 <div id="print-area" class="hidden"></div>

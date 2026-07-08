@@ -53,8 +53,9 @@ async function laddaBilar() {
       (b) => `
     <div class="list-item" data-regnr="${b.regnr}">
       <div>
-        <strong>${b.regnr}</strong><br>
-        <span class="meta">Tillagd ${new Date(b.skapad).toLocaleDateString("sv-SE")}</span>
+        <strong>${escapeHtml(b.regnr)}</strong><br>
+        <span class="meta">Tillagd ${new Date(b.skapad).toLocaleDateString("sv-SE")}</span><br>
+        <span class="meta">Ansvarig personal: ${escapeHtml(b.ansvarig_personal) || "–"}</span>
       </div>
       <div class="btn-row" style="width:auto;">
         <button class="btn-secondary btn-small" data-action="qr">QR</button>
@@ -67,8 +68,9 @@ async function laddaBilar() {
 
   wrap.querySelectorAll(".list-item").forEach((row) => {
     const regnr = row.dataset.regnr;
+    const bil = data.find((b) => b.regnr === regnr);
     row.querySelector('[data-action="qr"]').onclick = () => visaQRModal(regnr);
-    row.querySelector('[data-action="redigera"]').onclick = () => visaRedigeraBilModal(regnr);
+    row.querySelector('[data-action="redigera"]').onclick = () => visaRedigeraBilModal(bil);
     row.querySelector('[data-action="ta-bort"]').onclick = () =>
       visaBekraftaModal(`Ta bort bilen <strong>${regnr}</strong>?`, "Ta bort", async () => {
         const { error } = await sb.from("bilar").delete().eq("regnr", regnr);
@@ -106,12 +108,15 @@ function visaQRModal(regnr) {
   };
 }
 
-function visaRedigeraBilModal(gammaltRegnr) {
+function visaRedigeraBilModal(bil) {
+  const gammaltRegnr = bil.regnr;
   visaModal(`
     <div class="modal">
-      <h3>Redigera regnr</h3>
+      <h3>Redigera bil</h3>
       <label for="regnr-input">Regnr</label>
-      <input type="text" id="regnr-input" value="${gammaltRegnr}">
+      <input type="text" id="regnr-input" value="${escapeHtml(gammaltRegnr)}">
+      <label for="ansvarig-input">Ansvarig personal</label>
+      <input type="text" id="ansvarig-input" value="${escapeHtml(bil.ansvarig_personal)}">
       <div class="btn-row">
         <button class="btn-secondary" id="modal-avbryt">Avbryt</button>
         <button class="btn-primary" id="modal-spara">Spara</button>
@@ -121,11 +126,15 @@ function visaRedigeraBilModal(gammaltRegnr) {
   document.getElementById("modal-avbryt").onclick = stangModal;
   document.getElementById("modal-spara").onclick = async () => {
     const nyttRegnr = document.getElementById("regnr-input").value.trim();
-    if (!nyttRegnr || nyttRegnr === gammaltRegnr) {
+    const ansvarig = document.getElementById("ansvarig-input").value.trim();
+    if (!nyttRegnr) {
       stangModal();
       return;
     }
-    const { error } = await sb.from("bilar").update({ regnr: nyttRegnr }).eq("regnr", gammaltRegnr);
+    const { error } = await sb
+      .from("bilar")
+      .update({ regnr: nyttRegnr, ansvarig_personal: ansvarig || null })
+      .eq("regnr", gammaltRegnr);
     if (ärFkFel(error)) {
       alert("Kan inte byta regnr — bilen har sessioner kopplade till sig. Ta bort eller flytta dem i sektionen Sessioner först.");
     } else if (error) {
@@ -138,15 +147,18 @@ function visaRedigeraBilModal(gammaltRegnr) {
 
 document.getElementById("btn-lagg-till-bil").addEventListener("click", async () => {
   const input = document.getElementById("ny-regnr");
+  const ansvarigInput = document.getElementById("ny-ansvarig");
   const regnr = input.value.trim();
+  const ansvarig = ansvarigInput.value.trim();
   if (!regnr) return;
 
-  const { error } = await sb.from("bilar").insert({ regnr });
+  const { error } = await sb.from("bilar").insert({ regnr, ansvarig_personal: ansvarig || null });
   if (error) {
     alert("Kunde inte lägga till bilen (finns den redan?): " + error.message);
     return;
   }
   input.value = "";
+  ansvarigInput.value = "";
   await laddaBilar();
   visaQRModal(regnr);
 });
@@ -166,16 +178,16 @@ function periodFilter(query, filter) {
 
 async function laddaSessioner() {
   const tbody = document.getElementById("sessioner-body");
-  let query = sb.from("sessioner").select("*").order("datum", { ascending: false }).order("tid", { ascending: false });
+  let query = sb.from("sessioner_med_sluttid").select("*").order("datum", { ascending: false }).order("tid", { ascending: false });
   query = periodFilter(query, sessionerFilter);
 
   const { data, error } = await query;
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">Kunde inte hämta sessioner.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="muted">Kunde inte hämta sessioner.</td></tr>`;
     return;
   }
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">Inga sessioner i vald period.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="muted">Inga sessioner i vald period.</td></tr>`;
     return;
   }
 
@@ -184,9 +196,10 @@ async function laddaSessioner() {
       (s) => `
     <tr data-id="${s.id}">
       <td>${s.datum}</td>
-      <td>${s.regnr}</td>
-      <td>${s.forare}</td>
+      <td>${escapeHtml(s.regnr)}</td>
+      <td>${escapeHtml(s.forare)}</td>
       <td>${formatKlockslag(s.tid)}</td>
+      <td>${formatKlockslag(s.slut)}</td>
       <td>${skift(s.tid)}</td>
       <td>
         <div class="btn-row" style="width:auto;">
@@ -277,7 +290,7 @@ document.getElementById("btn-ny-session").addEventListener("click", () => visaSe
 // =====================================================
 
 async function exporteraIntervall(fran, till, filnamn) {
-  const { data, error } = await sb.from("sessioner").select("*").gte("datum", fran).lte("datum", till).order("datum");
+  const { data, error } = await sb.from("sessioner_med_sluttid").select("*").gte("datum", fran).lte("datum", till).order("datum");
   if (error || !data.length) {
     alert("Ingen data att exportera för vald period.");
     return;
