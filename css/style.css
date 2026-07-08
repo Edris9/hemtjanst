@@ -240,6 +240,24 @@ th {
 .list-item:last-child { border-bottom: none; }
 .list-item .meta { color: var(--muted); font-size: 0.85rem; }
 
+.site-footer {
+  max-width: 640px;
+  margin: 24px auto 0;
+  padding: var(--gap);
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+@media (min-width: 700px) {
+  .site-footer { max-width: 900px; }
+}
+@media (min-width: 1100px) {
+  .site-footer { max-width: 1120px; }
+}
+
 .hidden { display: none !important; }
 
 .text-center { text-align: center; }

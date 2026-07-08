@@ -5,8 +5,9 @@
 -- Tabell: bilar
 -- =========================================================
 create table if not exists bilar (
-  regnr  text primary key,
-  skapad timestamptz not null default now()
+  regnr             text primary key,
+  skapad            timestamptz not null default now(),
+  ansvarig_personal text
 );
 
 -- =========================================================
@@ -28,6 +29,20 @@ create table if not exists sessioner (
 
 create index if not exists idx_sessioner_regnr_datum on sessioner (regnr, datum);
 create index if not exists idx_sessioner_datum        on sessioner (datum);
+
+-- =========================================================
+-- Vy: sessioner_med_sluttid
+-- Beräknar "slut"-tid per session: nästa förares starttid samma
+-- bil/dag, annars kl 22:00 (registreringsfönstret är 07:00–22:00).
+-- =========================================================
+create or replace view sessioner_med_sluttid as
+select
+  s.*,
+  coalesce(
+    lead(s.tid) over (partition by s.regnr, s.datum order by s.tid),
+    (s.datum + time '22:00') at time zone 'Europe/Stockholm'
+  ) as slut
+from sessioner s;
 
 -- =========================================================
 -- Tabell: meddelanden
@@ -80,3 +95,4 @@ grant usage on schema public to anon;
 grant select, insert, update, delete on bilar       to anon;
 grant select, insert, update, delete on sessioner   to anon;
 grant select, insert, update, delete on meddelanden to anon;
+grant select on sessioner_med_sluttid to anon;
