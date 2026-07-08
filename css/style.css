@@ -120,7 +120,8 @@ label {
 input[type="text"],
 input[type="date"],
 input[type="datetime-local"],
-select {
+select,
+textarea {
   width: 100%;
   font-size: 1.05rem;
   padding: 14px;
@@ -129,6 +130,11 @@ select {
   margin-bottom: var(--gap);
   background: #fff;
   color: var(--text);
+}
+
+textarea {
+  font-family: inherit;
+  resize: vertical;
 }
 
 /* --- Modal / popup --- */

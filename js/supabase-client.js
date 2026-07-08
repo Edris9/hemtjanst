@@ -5,6 +5,24 @@ const sb = supabase.createClient(
   window.SUPABASE_CONFIG.anonKey
 );
 
+// --- Delad modal-hantering ---
+
+const modalRoot = document.getElementById("modal-root");
+
+function stangModal() {
+  modalRoot.innerHTML = "";
+}
+
+function visaModal(html) {
+  modalRoot.innerHTML = `<div class="overlay">${html}</div>`;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text ?? "";
+  return div.innerHTML;
+}
+
 // --- Delade hjälpfunktioner (dag/tid/formatering) ---
 
 function idagISO() {
