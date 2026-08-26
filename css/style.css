@@ -176,6 +176,7 @@ button:disabled {
   background: var(--primary);
   color: #fff;
 }
+.btn-primary:hover { background: var(--primary-dark); }
 .btn-primary:active { background: var(--primary-dark); }
 
 .btn-secondary {
@@ -183,8 +184,8 @@ button:disabled {
   color: #1b1f23;
   border: 1px solid #c3ccd6;
 }
-.btn-secondary:hover { background: #dde4eb; }
-.btn-secondary:active { background: #cfd8e1; }
+.btn-secondary:hover { background: #bcc7d4; }
+.btn-secondary:active { background: #a8b5c4; }
 
 .btn-danger {
   background: var(--danger);

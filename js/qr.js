@@ -1,7 +1,9 @@
 // Tunn wrapper runt qrcode.js (davidshimjs), laddas via CDN i HTML.
 
 function bilUrl(regnr) {
-  return new URL(`index.html?bil=${encodeURIComponent(regnr)}`, window.location.href).href;
+  // Skapas från admin-sidan, använd relativ path upp en nivå
+  const parentDir = new URL('..', window.location.href).href;
+  return `${parentDir}index.html?bil=${encodeURIComponent(regnr)}`;
 }
 
 function renderQR(containerEl, regnr) {
