@@ -8,14 +8,32 @@
 </head>
 <body>
 <div class="container">
-  <h1>Billista</h1>
-  <p class="subtitle" id="datum-visning"></p>
+  <div class="topbar">
+    <div>
+      <h1>Billista</h1>
+      <p class="subtitle" id="datum-visning"></p>
+    </div>
+  </div>
 
   <div class="btn-row">
     <button id="btn-rapportera" class="btn-secondary">Rapportera ett problem</button>
   </div>
 
+  <details id="bilstatus-dropdown" class="status-dropdown">
+    <summary>
+      <span>Se lediga bilar</span>
+      <span id="status-summary-count" class="status-summary-count"></span>
+    </summary>
+    <div id="status-grid" class="status-grid" aria-live="polite"></div>
+  </details>
+
   <h2>Dagens lista</h2>
+  <div class="history-toolbar">
+    <div class="search-box">
+      <label class="sr-only" for="history-search">Sök i historik</label>
+      <input id="history-search" type="text" placeholder="Sök förare eller bil..." />
+    </div>
+  </div>
   <div class="table-wrap">
     <table>
       <thead>

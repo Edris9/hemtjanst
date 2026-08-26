@@ -1,9 +1,15 @@
-// Initierar Supabase-klienten. Kräver att config.js och
-// supabase-js (CDN) är inladdade före denna fil.
-const sb = supabase.createClient(
-  window.SUPABASE_CONFIG.url,
-  window.SUPABASE_CONFIG.anonKey
+// Initierar Supabase-klienten endast om config.js innehåller giltiga värden.
+// Om URL eller anon-key saknas, kör appen i lokal fallback-läge för admin-login.
+const sbConfig = (window.SUPABASE_CONFIG && typeof window.SUPABASE_CONFIG === "object") ? window.SUPABASE_CONFIG : {};
+const hasSupabaseConfig = Boolean(
+  typeof window.supabase !== "undefined" &&
+  typeof window.supabase.createClient === "function" &&
+  typeof sbConfig.url === "string" &&
+  sbConfig.url.trim() &&
+  typeof sbConfig.anonKey === "string" &&
+  sbConfig.anonKey.trim()
 );
+const sb = hasSupabaseConfig ? window.supabase.createClient(sbConfig.url.trim(), sbConfig.anonKey.trim()) : null;
 
 // --- Delad modal-hantering ---
 

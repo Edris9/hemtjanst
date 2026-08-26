@@ -9,6 +9,73 @@ function rensaBilParam() {
   history.replaceState(null, "", url.pathname + url.search);
 }
 
+function isoWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function veckonummerText() {
+  const d = new Date();
+  return `Vecka ${isoWeek(d)}`;
+}
+
+async function laddaBilstatus() {
+  const wrap = document.getElementById("status-grid");
+  const summaryCount = document.getElementById("status-summary-count");
+  const { data, error } = await sb
+    .from("bilar")
+    .select("regnr")
+    .order("regnr");
+
+  if (error || !data || !data.length) {
+    wrap.innerHTML = '<div class="status-card empty">Inga bilar registrerade.</div>';
+    if (summaryCount) summaryCount.textContent = "";
+    return;
+  }
+
+  const bilRegnr = data.map((b) => b.regnr);
+  const { data: sessionData, error: sessionError } = await sb
+    .from("sessioner")
+    .select("regnr, forare, tid")
+    .eq("datum", idagISO())
+    .order("tid", { ascending: false });
+
+  if (sessionError) {
+    wrap.innerHTML = '<div class="status-card empty">Kunde inte hämta status.</div>';
+    if (summaryCount) summaryCount.textContent = "";
+    return;
+  }
+
+  const senastePerBil = new Map();
+  for (const s of sessionData || []) {
+    if (!senastePerBil.has(s.regnr) || new Date(s.tid) > new Date(senastePerBil.get(s.regnr).tid)) {
+      senastePerBil.set(s.regnr, s);
+    }
+  }
+
+  const lediga = bilRegnr.filter((regnr) => !senastePerBil.has(regnr));
+  if (summaryCount) {
+    summaryCount.textContent = `${lediga.length} av ${bilRegnr.length}`;
+  }
+
+  wrap.innerHTML = bilRegnr
+    .map((regnr) => {
+      const senaste = senastePerBil.get(regnr);
+      const isActive = !!senaste;
+      return `
+        <div class="status-card" data-status="${isActive ? "active" : "inactive"}">
+          <span class="status-badge">${isActive ? "I bruk" : "Ledig"}</span>
+          <div class="status-regnr">${escapeHtml(regnr)}</div>
+          <div class="status-driver">${isActive ? escapeHtml(senaste.forare) : "Ingen aktiv förare"}</div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
 // --- Dagens lista ---
 
 async function laddaDagensLista() {
@@ -29,7 +96,22 @@ async function laddaDagensLista() {
     return;
   }
 
-  tbody.innerHTML = data
+  const searchInput = document.getElementById("history-search");
+  const query = (searchInput?.value || "").trim().toLowerCase();
+
+  const filteredData = !query
+    ? data
+    : data.filter((r) => {
+        const haystack = `${r.regnr} ${r.forare}`.toLowerCase();
+        return haystack.includes(query);
+      });
+
+  if (!filteredData.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">Inga träffar för sökningen.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredData
     .map(
       (r) => `
     <tr>
@@ -173,6 +255,7 @@ function visaModalKorForsiktigt() {
   document.getElementById("modal-stang").onclick = () => {
     rensaBilParam();
     stangModal();
+    laddaBilstatus();
     laddaDagensLista();
   };
 }
@@ -199,14 +282,18 @@ async function exporteraPeriod(startDatum, filnamn) {
 // --- Init ---
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("datum-visning").textContent = new Date().toLocaleDateString("sv-SE", {
+  document.getElementById("datum-visning").textContent = `${new Date().toLocaleDateString("sv-SE", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric"
-  });
+  })} • ${veckonummerText()}`;
 
+  laddaBilstatus();
   laddaDagensLista();
+
+  const searchInput = document.getElementById("history-search");
+  searchInput.addEventListener("input", () => laddaDagensLista());
 
   document.getElementById("btn-rapportera").onclick = () => visaRapporteraModal();
 

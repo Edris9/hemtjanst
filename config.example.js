@@ -6,5 +6,7 @@
 // committas till git (den ligger i .gitignore).
 window.SUPABASE_CONFIG = {
   url: "https://ditt-projekt.supabase.co",
-  anonKey: "din-anon-key"
+  anonKey: "din-anon-key",
+  adminName: "ditt-admin-namn",
+  adminPassword: "din-admin-pin"
 };

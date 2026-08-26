@@ -1,3 +1,5 @@
 config.js
+.env
+sql/
 .DS_Store
 .claude/

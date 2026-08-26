@@ -1,5 +1,119 @@
 // Admin-vy: bilar (CRUD), sessioner (CRUD), export, rensning.
 
+function normalizeName(value) {
+  return (value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\s+/g, "")
+    .toLowerCase();
+}
+
+function namesMatch(first, second) {
+  return normalizeName(first) === normalizeName(second);
+}
+
+async function validateAdminLogin(name, password) {
+  const configuredName = window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.adminName;
+  const configuredPassword = window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.adminPassword;
+
+  if (!sb) {
+    if (!configuredName || !configuredPassword) {
+      return { ok: false, message: "Admin är inte konfigurerad (saknar config.js)." };
+    }
+    const ok = namesMatch(configuredName, name) && String(password).trim() === String(configuredPassword).trim();
+    return ok ? { ok: true } : { ok: false, message: "Fel namn eller lösenord." };
+  }
+
+  const { data, error } = await sb
+    .from("admin")
+    .select("namn, lösenord");
+
+  if (error) {
+    return { ok: false, message: "Kunde inte kontrollera admin." };
+  }
+
+  const row = (data || []).find((item) => namesMatch(item.namn, name));
+  if (!row) {
+    return { ok: false, message: "Fel namn eller lösenord." };
+  }
+
+  const passMatch = String(row.lösenord).trim() === String(password).trim();
+  if (!passMatch) {
+    return { ok: false, message: "Fel namn eller lösenord." };
+  }
+
+  return { ok: true };
+}
+
+function initAdminAuth() {
+  const app = document.getElementById("admin-app");
+  const login = document.getElementById("admin-login");
+  const nameInput = document.getElementById("admin-name");
+  const passwordInput = document.getElementById("admin-password");
+  const loginBtn = document.getElementById("admin-login-btn");
+  const errorBox = document.getElementById("admin-login-error");
+  const logoutBtn = document.getElementById("admin-logout");
+
+  if (!app || !login || !nameInput || !passwordInput || !loginBtn || !errorBox || !logoutBtn) {
+    return false;
+  }
+
+  const unlock = () => {
+    app.classList.remove("hidden");
+    login.classList.add("hidden");
+    localStorage.setItem("billista_admin_auth", "true");
+  };
+
+  const lock = () => {
+    app.classList.add("hidden");
+    login.classList.remove("hidden");
+    localStorage.removeItem("billista_admin_auth");
+    nameInput.value = "";
+    passwordInput.value = "";
+    errorBox.textContent = "";
+  };
+
+  const handleLogin = async () => {
+    const name = nameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!name || !password) {
+      errorBox.textContent = "Skriv in namn och lösenord.";
+      return false;
+    }
+
+    const result = await validateAdminLogin(name, password);
+    if (!result.ok) {
+      errorBox.textContent = result.message;
+      return false;
+    }
+
+    unlock();
+    return true;
+  };
+
+  if (localStorage.getItem("billista_admin_auth") === "true") {
+    unlock();
+    logoutBtn.onclick = lock;
+    return true;
+  }
+
+  loginBtn.onclick = handleLogin;
+  passwordInput.addEventListener("keydown", async (event) => {
+    if (event.key === "Enter") {
+      await handleLogin();
+    }
+  });
+  nameInput.addEventListener("keydown", async (event) => {
+    if (event.key === "Enter") {
+      await handleLogin();
+    }
+  });
+  logoutBtn.onclick = lock;
+
+  return false;
+}
+
 function visaBekraftaModal(text, knappText, onOk) {
   visaModal(`
     <div class="modal warn">
@@ -144,6 +258,34 @@ function visaRedigeraBilModal(bil) {
     laddaBilar();
   };
 }
+
+document.getElementById("btn-ladda-ner-qr").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-ladda-ner-qr");
+  const { data, error } = await sb.from("bilar").select("regnr").order("regnr");
+
+  if (error || !data || !data.length) {
+    alert("Inga bilar att generera QR-koder för.");
+    return;
+  }
+
+  const originalText = btn.textContent;
+  btn.disabled = true;
+
+  try {
+    await laddaNerAllaQRSomZip(
+      data.map((b) => b.regnr),
+      (klara, totalt) => {
+        btn.textContent = `Laddar ner... (${klara}/${totalt})`;
+      }
+    );
+    alert(`Klart! ${data.length} QR-koder laddades ner som en ZIP-fil.`);
+  } catch (err) {
+    alert("Kunde inte skapa ZIP-filen: " + err.message);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
 
 document.getElementById("btn-lagg-till-bil").addEventListener("click", async () => {
   const input = document.getElementById("ny-regnr");
@@ -339,5 +481,7 @@ document.getElementById("btn-rapportera").addEventListener("click", () => visaRa
 // Init
 // =====================================================
 
-laddaBilar();
-laddaSessioner();
+if (initAdminAuth()) {
+  laddaBilar();
+  laddaSessioner();
+}

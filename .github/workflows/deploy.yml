@@ -40,7 +40,9 @@ jobs:
           cat <<EOF > _site/config.js
           window.SUPABASE_CONFIG = {
             url: "${{ secrets.SUPABASE_URL }}",
-            anonKey: "${{ secrets.SUPABASE_ANON_KEY }}"
+            anonKey: "${{ secrets.SUPABASE_ANON_KEY }}",
+            adminName: "${{ secrets.ADMIN_NAME }}",
+            adminPassword: "${{ secrets.ADMIN_PASSWORD }}"
           };
           EOF
 
