@@ -1,0 +1,20 @@
+* [33mfc5e56c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Admin-inloggning, QR-export, mobil-UX och städning av hemligheter
+*   [33m27c8502[m Merge pull request #2 from Edris9/feature/ansvarig-sluttid-footer
+[32m|[m[33m\[m  
+[32m|[m * [33md7691c7[m[33m ([m[1;31morigin/feature/ansvarig-sluttid-footer[m[33m)[m Lägg till ansvarig personal, beräknad slut-tid och gemensam footer
+[32m|[m[32m/[m  
+*   [33mc9537f1[m Merge pull request #1 from Edris9/feature/ticket-meddelanden
+[34m|[m[35m\[m  
+[34m|[m * [33mf402f20[m[33m ([m[1;31morigin/feature/ticket-meddelanden[m[33m)[m Lägg till ticket-sida för att rapportera och visa meddelanden
+[34m|[m[34m/[m  
+* [33m3abd110[m Trigga om deploy
+* [33m6f0d3de[m Lägg till beräknad Skift-kolumn (Dagtid/Kvällstid)
+* [33md0281ff[m Bredda layouten på desktop, oförändrad på mobil
+* [33m03fe220[m Förenkla sessionsmodell: logga förare+tid, ta över vid skanning
+* [33m192713f[m Trigga om deploy efter SUPABASE_ANON_KEY
+* [33mb912d6e[m Trigga om deploy efter workflow-behörighet
+* [33m3132652[m Trigga om deploy efter secrets/Pages-konfiguration
+*   [33m1472ebc[m Merge remote README
+[36m|[m[1;31m\[m  
+[36m|[m * [33maf71a06[m Initial commit
+* [33m28fced5[m Initial commit: billista för hemtjänst

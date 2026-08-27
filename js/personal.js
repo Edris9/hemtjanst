@@ -25,33 +25,30 @@ function veckonummerText() {
 async function laddaBilstatus() {
   const wrap = document.getElementById("status-grid");
   const summaryCount = document.getElementById("status-summary-count");
-  const { data, error } = await sb
-    .from("bilar")
-    .select("regnr")
-    .order("regnr");
 
-  if (error || !data || !data.length) {
+  // Parallellisera queries istället för sekventiella awaits
+  const [bilar, sessionData] = await Promise.all([
+    getCachedBilarList(),
+    sb.from("sessioner")
+      .select("regnr, forare, tid")
+      .eq("datum", idagISO())
+      .order("tid", { ascending: false })
+      .then(r => r.data || [])
+      .catch(() => [])
+  ]);
+
+  if (!bilar.length) {
     wrap.innerHTML = '<div class="status-card empty">Inga bilar registrerade.</div>';
     if (summaryCount) summaryCount.textContent = "";
     return;
   }
 
-  const bilRegnr = data.map((b) => b.regnr);
-  const { data: sessionData, error: sessionError } = await sb
-    .from("sessioner")
-    .select("regnr, forare, tid")
-    .eq("datum", idagISO())
-    .order("tid", { ascending: false });
+  const bilRegnr = bilar.map((b) => b.regnr);
 
-  if (sessionError) {
-    wrap.innerHTML = '<div class="status-card empty">Kunde inte hämta status.</div>';
-    if (summaryCount) summaryCount.textContent = "";
-    return;
-  }
-
+  // Optimera: data är redan sorterad, ta bara första per regnr
   const senastePerBil = new Map();
-  for (const s of sessionData || []) {
-    if (!senastePerBil.has(s.regnr) || new Date(s.tid) > new Date(senastePerBil.get(s.regnr).tid)) {
+  for (const s of sessionData) {
+    if (!senastePerBil.has(s.regnr)) {
       senastePerBil.set(s.regnr, s);
     }
   }
@@ -289,11 +286,12 @@ document.addEventListener("DOMContentLoaded", () => {
     day: "numeric"
   })} • ${veckonummerText()}`;
 
-  laddaBilstatus();
-  laddaDagensLista();
+  // Parallellisera initiala datahämtningar
+  Promise.all([laddaBilstatus(), laddaDagensLista()]);
 
   const searchInput = document.getElementById("history-search");
-  searchInput.addEventListener("input", () => laddaDagensLista());
+  const debouncedSearch = debounce(() => laddaDagensLista(), 300);
+  searchInput.addEventListener("input", debouncedSearch);
 
   document.getElementById("btn-rapportera").onclick = () => visaRapporteraModal();
 

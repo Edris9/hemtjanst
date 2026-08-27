@@ -151,12 +151,8 @@ function ärFkFel(error) {
 
 async function laddaBilar() {
   const wrap = document.getElementById("bilar-lista");
-  const { data, error } = await sb.from("bilar").select("*").order("regnr");
+  const data = await getCachedBilarList();
 
-  if (error) {
-    wrap.innerHTML = `<p class="muted">Kunde inte hämta bilar.</p>`;
-    return;
-  }
   if (!data.length) {
     wrap.innerHTML = `<p class="muted">Inga bilar tillagda ännu.</p>`;
     return;
@@ -190,9 +186,11 @@ async function laddaBilar() {
         const { error } = await sb.from("bilar").delete().eq("regnr", regnr);
         if (ärFkFel(error)) {
           alert("Kan inte ta bort bilen — den har sessioner kopplade till sig. Ta bort eller flytta dem i sektionen Sessioner först.");
+        } else {
+          invalidateBilarCache();
+          row.remove();
         }
         stangModal();
-        laddaBilar();
       });
   });
 }
@@ -253,6 +251,8 @@ function visaRedigeraBilModal(bil) {
       alert("Kan inte byta regnr — bilen har sessioner kopplade till sig. Ta bort eller flytta dem i sektionen Sessioner först.");
     } else if (error) {
       alert("Kunde inte spara: " + error.message);
+    } else {
+      invalidateBilarCache();
     }
     stangModal();
     laddaBilar();
@@ -261,9 +261,9 @@ function visaRedigeraBilModal(bil) {
 
 document.getElementById("btn-ladda-ner-qr").addEventListener("click", async () => {
   const btn = document.getElementById("btn-ladda-ner-qr");
-  const { data, error } = await sb.from("bilar").select("regnr").order("regnr");
+  const data = await getCachedBilarList();
 
-  if (error || !data || !data.length) {
+  if (!data.length) {
     alert("Inga bilar att generera QR-koder för.");
     return;
   }
@@ -299,6 +299,7 @@ document.getElementById("btn-lagg-till-bil").addEventListener("click", async () 
     alert("Kunde inte lägga till bilen (finns den redan?): " + error.message);
     return;
   }
+  invalidateBilarCache();
   input.value = "";
   ansvarigInput.value = "";
   await laddaBilar();
@@ -320,7 +321,7 @@ function periodFilter(query, filter) {
 
 async function laddaSessioner() {
   const tbody = document.getElementById("sessioner-body");
-  let query = sb.from("sessioner_med_sluttid").select("*").order("datum", { ascending: false }).order("tid", { ascending: false });
+  let query = sb.from("sessioner_med_sluttid").select("*").order("datum", { ascending: false }).order("tid", { ascending: false }).limit(100);
   query = periodFilter(query, sessionerFilter);
 
   const { data, error } = await query;
@@ -367,7 +368,7 @@ async function laddaSessioner() {
 }
 
 async function visaSessionModal(session) {
-  const { data: bilar } = await sb.from("bilar").select("regnr").order("regnr");
+  const bilar = await getCachedBilarList();
   const ar = !!session;
 
   const bilOptions = (bilar || [])

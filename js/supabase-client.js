@@ -74,3 +74,38 @@ function tillISODatum(d) {
   const tz = d.getTimezoneOffset() * 60000;
   return new Date(d - tz).toISOString().slice(0, 10);
 }
+
+// --- Caching för bilar (shared across all views) ---
+
+let bilarCache = null;
+let bilarCacheTime = 0;
+const BILAR_CACHE_TTL = 30000; // 30 sekunder
+
+async function getCachedBilarList() {
+  const now = Date.now();
+  if (bilarCache && now - bilarCacheTime < BILAR_CACHE_TTL) {
+    return bilarCache;
+  }
+
+  const { data, error } = await sb.from("bilar").select("*").order("regnr");
+  if (!error && data) {
+    bilarCache = data;
+    bilarCacheTime = now;
+  }
+  return data || [];
+}
+
+function invalidateBilarCache() {
+  bilarCache = null;
+  bilarCacheTime = 0;
+}
+
+// --- Debounce utility ---
+
+function debounce(fn, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}

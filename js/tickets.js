@@ -3,7 +3,7 @@
 // på /ticket. Används både från billistan och admin-sidan.
 
 async function visaRapporteraModal(forvaldRegnr) {
-  const { data: bilar } = await sb.from("bilar").select("regnr").order("regnr");
+  const bilar = await getCachedBilarList();
 
   const bilOptions =
     `<option value="">Inget specifikt</option>` +
