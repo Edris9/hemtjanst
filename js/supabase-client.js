@@ -46,6 +46,18 @@ function skift(iso) {
   return new Date(iso).getHours() < 12 ? "Dagtid" : "Kvällstid";
 }
 
+function omradeKlass(omrade) {
+  if (omrade === "gron") return "zon-gron";
+  if (omrade === "rosa_bla") return "zon-rosa-bla";
+  return "";
+}
+
+function omradeLabel(omrade) {
+  if (omrade === "gron") return '<span class="zon-label">Grön</span>';
+  if (omrade === "rosa_bla") return '<span class="zon-label">Rosa / Blå</span>';
+  return "";
+}
+
 function formatKlockslag(iso) {
   if (!iso) return "";
   const d = new Date(iso);

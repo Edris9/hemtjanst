@@ -443,6 +443,19 @@ th {
   color: var(--muted);
 }
 
+.status-card.zon-gron {
+  background: #dff3e3;
+  border-color: rgba(47, 158, 68, 0.4);
+}
+.status-card.zon-rosa-bla {
+  background: linear-gradient(135deg, #fbdce6 50%, #dbe9fd 50%);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.status-regnr .zon-label {
+  font-size: 0.62rem;
+  vertical-align: middle;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

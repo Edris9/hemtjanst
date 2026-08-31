@@ -43,8 +43,6 @@ async function laddaBilstatus() {
     return;
   }
 
-  const bilRegnr = bilar.map((b) => b.regnr);
-
   // Optimera: data är redan sorterad, ta bara första per regnr
   const senastePerBil = new Map();
   for (const s of sessionData) {
@@ -53,19 +51,19 @@ async function laddaBilstatus() {
     }
   }
 
-  const lediga = bilRegnr.filter((regnr) => !senastePerBil.has(regnr));
+  const lediga = bilar.filter((b) => !senastePerBil.has(b.regnr));
   if (summaryCount) {
-    summaryCount.textContent = `${lediga.length} av ${bilRegnr.length}`;
+    summaryCount.textContent = `${lediga.length} av ${bilar.length}`;
   }
 
-  wrap.innerHTML = bilRegnr
-    .map((regnr) => {
-      const senaste = senastePerBil.get(regnr);
+  wrap.innerHTML = bilar
+    .map((b) => {
+      const senaste = senastePerBil.get(b.regnr);
       const isActive = !!senaste;
       return `
-        <div class="status-card" data-status="${isActive ? "active" : "inactive"}">
+        <div class="status-card ${omradeKlass(b.omrade)}" data-status="${isActive ? "active" : "inactive"}">
           <span class="status-badge">${isActive ? "I bruk" : "Ledig"}</span>
-          <div class="status-regnr">${escapeHtml(regnr)}</div>
+          <div class="status-regnr">${escapeHtml(b.regnr)} ${omradeLabel(b.omrade)}</div>
           <div class="status-driver">${isActive ? escapeHtml(senaste.forare) : "Ingen aktiv förare"}</div>
         </div>
       `;
