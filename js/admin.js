@@ -336,7 +336,9 @@ async function laddaSessioner() {
   let query = sb.from("sessioner_med_sluttid").select("*").order("datum", { ascending: false }).order("tid", { ascending: false }).limit(100);
   query = periodFilter(query, sessionerFilter);
 
-  const { data, error } = await query;
+  const [{ data, error }, bilar] = await Promise.all([query, getCachedBilarList()]);
+  const omradePerRegnr = new Map(bilar.map((b) => [b.regnr, b.omrade]));
+
   if (error) {
     tbody.innerHTML = `<tr><td colspan="7" class="muted">Kunde inte hämta sessioner.</td></tr>`;
     return;
@@ -349,7 +351,7 @@ async function laddaSessioner() {
   tbody.innerHTML = data
     .map(
       (s) => `
-    <tr data-id="${s.id}">
+    <tr data-id="${s.id}" class="${omradeKlass(omradePerRegnr.get(s.regnr))}">
       <td>${s.datum}</td>
       <td>${escapeHtml(s.regnr)}</td>
       <td>${escapeHtml(s.forare)}</td>

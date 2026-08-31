@@ -456,6 +456,13 @@ th {
   vertical-align: middle;
 }
 
+tr.zon-gron > td {
+  background: #dff3e3;
+}
+tr.zon-rosa-bla > td {
+  background: linear-gradient(135deg, #fbdce6 50%, #dbe9fd 50%);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

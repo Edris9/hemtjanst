@@ -75,11 +75,15 @@ async function laddaBilstatus() {
 
 async function laddaDagensLista() {
   const tbody = document.getElementById("dagens-lista-body");
-  const { data, error } = await sb
-    .from("sessioner_med_sluttid")
-    .select("*")
-    .eq("datum", idagISO())
-    .order("tid", { ascending: true });
+  const [{ data, error }, bilar] = await Promise.all([
+    sb
+      .from("sessioner_med_sluttid")
+      .select("*")
+      .eq("datum", idagISO())
+      .order("tid", { ascending: true }),
+    getCachedBilarList()
+  ]);
+  const omradePerRegnr = new Map(bilar.map((b) => [b.regnr, b.omrade]));
 
   if (error) {
     tbody.innerHTML = `<tr><td colspan="5" class="muted">Kunde inte hämta listan.</td></tr>`;
@@ -109,7 +113,7 @@ async function laddaDagensLista() {
   tbody.innerHTML = filteredData
     .map(
       (r) => `
-    <tr>
+    <tr class="${omradeKlass(omradePerRegnr.get(r.regnr))}">
       <td>${escapeHtml(r.regnr)}</td>
       <td>${escapeHtml(r.forare)}</td>
       <td>${formatKlockslag(r.tid)}</td>
