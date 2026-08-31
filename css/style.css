@@ -482,6 +482,32 @@ th {
 .list-item:last-child { border-bottom: none; }
 .list-item .meta { color: var(--muted); font-size: 0.85rem; }
 
+.list-item.zon-gron,
+.list-item.zon-rosa-bla {
+  border-bottom: none;
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.list-item.zon-gron {
+  background: #dff3e3;
+}
+.list-item.zon-rosa-bla {
+  background: linear-gradient(135deg, #fbdce6 50%, #dbe9fd 50%);
+}
+.zon-label {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  padding: 2px 8px;
+  vertical-align: middle;
+}
+
 /* Under ~480px stackas listrader så texten inte klämmer ihop mot knapparna */
 @media (max-width: 480px) {
   .list-item {

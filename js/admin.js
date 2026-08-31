@@ -149,6 +149,18 @@ function ärFkFel(error) {
 // Bilar
 // =====================================================
 
+function omradeKlass(omrade) {
+  if (omrade === "gron") return "zon-gron";
+  if (omrade === "rosa_bla") return "zon-rosa-bla";
+  return "";
+}
+
+function omradeLabel(omrade) {
+  if (omrade === "gron") return '<span class="zon-label">Grön</span>';
+  if (omrade === "rosa_bla") return '<span class="zon-label">Rosa / Blå</span>';
+  return "";
+}
+
 async function laddaBilar() {
   const wrap = document.getElementById("bilar-lista");
   const data = await getCachedBilarList();
@@ -161,9 +173,9 @@ async function laddaBilar() {
   wrap.innerHTML = data
     .map(
       (b) => `
-    <div class="list-item" data-regnr="${b.regnr}">
+    <div class="list-item ${omradeKlass(b.omrade)}" data-regnr="${b.regnr}">
       <div>
-        <strong>${escapeHtml(b.regnr)}</strong><br>
+        <strong>${escapeHtml(b.regnr)}</strong> ${omradeLabel(b.omrade)}<br>
         <span class="meta">Tillagd ${new Date(b.skapad).toLocaleDateString("sv-SE")}</span><br>
         <span class="meta">Ansvarig personal: ${escapeHtml(b.ansvarig_personal) || "–"}</span>
       </div>
@@ -229,6 +241,12 @@ function visaRedigeraBilModal(bil) {
       <input type="text" id="regnr-input" value="${escapeHtml(gammaltRegnr)}">
       <label for="ansvarig-input">Ansvarig personal</label>
       <input type="text" id="ansvarig-input" value="${escapeHtml(bil.ansvarig_personal)}">
+      <label for="omrade-input">Område</label>
+      <select id="omrade-input">
+        <option value="">Område – välj</option>
+        <option value="gron" ${bil.omrade === "gron" ? "selected" : ""}>Grön</option>
+        <option value="rosa_bla" ${bil.omrade === "rosa_bla" ? "selected" : ""}>Rosa / Blå</option>
+      </select>
       <div class="btn-row">
         <button class="btn-secondary" id="modal-avbryt">Avbryt</button>
         <button class="btn-primary" id="modal-spara">Spara</button>
@@ -239,13 +257,14 @@ function visaRedigeraBilModal(bil) {
   document.getElementById("modal-spara").onclick = async () => {
     const nyttRegnr = document.getElementById("regnr-input").value.trim();
     const ansvarig = document.getElementById("ansvarig-input").value.trim();
+    const omrade = document.getElementById("omrade-input").value;
     if (!nyttRegnr) {
       stangModal();
       return;
     }
     const { error } = await sb
       .from("bilar")
-      .update({ regnr: nyttRegnr, ansvarig_personal: ansvarig || null })
+      .update({ regnr: nyttRegnr, ansvarig_personal: ansvarig || null, omrade: omrade || null })
       .eq("regnr", gammaltRegnr);
     if (ärFkFel(error)) {
       alert("Kan inte byta regnr — bilen har sessioner kopplade till sig. Ta bort eller flytta dem i sektionen Sessioner först.");
@@ -290,11 +309,15 @@ document.getElementById("btn-ladda-ner-qr").addEventListener("click", async () =
 document.getElementById("btn-lagg-till-bil").addEventListener("click", async () => {
   const input = document.getElementById("ny-regnr");
   const ansvarigInput = document.getElementById("ny-ansvarig");
+  const omradeInput = document.getElementById("ny-omrade");
   const regnr = input.value.trim();
   const ansvarig = ansvarigInput.value.trim();
+  const omrade = omradeInput.value;
   if (!regnr) return;
 
-  const { error } = await sb.from("bilar").insert({ regnr, ansvarig_personal: ansvarig || null });
+  const { error } = await sb
+    .from("bilar")
+    .insert({ regnr, ansvarig_personal: ansvarig || null, omrade: omrade || null });
   if (error) {
     alert("Kunde inte lägga till bilen (finns den redan?): " + error.message);
     return;
@@ -302,6 +325,7 @@ document.getElementById("btn-lagg-till-bil").addEventListener("click", async () 
   invalidateBilarCache();
   input.value = "";
   ansvarigInput.value = "";
+  omradeInput.value = "";
   await laddaBilar();
   visaQRModal(regnr);
 });
