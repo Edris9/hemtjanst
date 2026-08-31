@@ -8,7 +8,7 @@ async function visaRapporteraModal(forvaldRegnr) {
   const bilOptions =
     `<option value="">Inget specifikt</option>` +
     (bilar || [])
-      .map((b) => `<option value="${b.regnr}" ${b.regnr === forvaldRegnr ? "selected" : ""}>${b.regnr}</option>`)
+      .map((b) => bilOptionHtml(b, b.regnr === forvaldRegnr))
       .join("");
 
   visaModal(`

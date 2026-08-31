@@ -384,7 +384,7 @@ async function visaSessionModal(session) {
   const ar = !!session;
 
   const bilOptions = (bilar || [])
-    .map((b) => `<option value="${b.regnr}" ${session && session.regnr === b.regnr ? "selected" : ""}>${b.regnr}</option>`)
+    .map((b) => bilOptionHtml(b, session && session.regnr === b.regnr))
     .join("");
 
   visaModal(`

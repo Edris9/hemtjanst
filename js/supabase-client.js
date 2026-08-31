@@ -58,6 +58,24 @@ function omradeLabel(omrade) {
   return "";
 }
 
+function omradeOptionBg(omrade) {
+  if (omrade === "gron") return "#dff3e3";
+  if (omrade === "rosa_bla") return "#fbdce6";
+  return "";
+}
+
+function omradeOptionTag(omrade) {
+  if (omrade === "gron") return "Grön – ";
+  if (omrade === "rosa_bla") return "Rosa/Blå – ";
+  return "";
+}
+
+function bilOptionHtml(b, isSelected) {
+  const bg = omradeOptionBg(b.omrade);
+  const style = bg ? ` style="background:${bg}"` : "";
+  return `<option value="${escapeHtml(b.regnr)}"${style} ${isSelected ? "selected" : ""}>${omradeOptionTag(b.omrade)}${escapeHtml(b.regnr)}</option>`;
+}
+
 function formatKlockslag(iso) {
   if (!iso) return "";
   const d = new Date(iso);
